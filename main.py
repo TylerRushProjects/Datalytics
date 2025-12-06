@@ -3,6 +3,7 @@
 import sys
 from utils.menus import show_main_menu
 from utils.validation import require_menu_choice
+import core.audit
 
 def main():
     """Main application loop that accepts and routes user actions."""
@@ -59,15 +60,23 @@ def main():
                 else:
                     print("Invalid choice.")
         elif choice == "3":
-            print("Duplicate detection selected (DUP).")
+            from core.duplicates import apply_duplicate_flow
+            apply_duplicate_flow()
         elif choice == "4":
-            print("Audit log selected (AUD).")
+            from core.audit import print_audit_log
+            print_audit_log()
         elif choice == "5":
-            print("Export selected (EXP).")
+            from core.exporter import export_flow
+            export_flow()
         elif choice == "6":
             from core.state import undo_last
+            from core.audit import log_action
             if undo_last():
                 print("Last action undone.")
+                log_action(
+                    "UNDO",
+                    details="Reverted the most recent data transformation."
+                )
             else:
                 print("No previous action to undo.")
         elif choice == "0":
