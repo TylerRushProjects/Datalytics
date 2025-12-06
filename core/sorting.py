@@ -1,7 +1,7 @@
 import pandas as pd
 from core.state import get_dataframe, set_dataframe, push_state
 from utils.menus import show_sort_direction_menu
-
+from core.audit import log_action
 
 def apply_sort_flow():
     """
@@ -66,6 +66,14 @@ def _apply_sort(df, column, ascending):
         print(f"\nRows total: {len(sorted_df)}")
 
         set_dataframe(sorted_df)
+
+        log_action(
+            "SORT",
+            details=f"Sorted by column '{column}' in {'ascending' if ascending else 'descending'} order.",
+            conditions=f"{column} {'ASC' if ascending else 'DESC'}",
+            columns=[column],
+            rows_affected=len(sorted_df),
+        )
 
     except Exception as e:
         print(f"Error during sorting: {e}")

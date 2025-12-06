@@ -1,6 +1,7 @@
 import pandas as pd
 from core.state import get_dataframe, set_dataframe, push_state
 from utils.menus import show_condition_menu
+from core.audit import log_action
 
 
 def apply_filter_flow():
@@ -113,6 +114,14 @@ def _apply_filter(df, column, condition, value):
 
         # Update global DataFrame
         set_dataframe(filtered)
+
+        log_action(
+            "FILTER",
+            details=f"Filtered on column '{column}' with condition '{condition}' and value '{value}'.",
+            conditions=f"{column} {condition} {value}",
+            columns=[column],
+            rows_affected=len(filtered),
+        )
 
     except ValueError:
         print("Invalid numeric input for this condition.")

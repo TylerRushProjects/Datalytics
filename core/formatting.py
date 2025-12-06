@@ -1,6 +1,7 @@
 import pandas as pd
 from core.state import get_dataframe, set_dataframe, push_state
 from utils.menus import show_format_menu
+from core.audit import log_action
 
 
 def apply_format_flow():
@@ -122,6 +123,14 @@ def _apply_format(df: pd.DataFrame, column: str, fmt_choice: str) -> None:
         print("\nFormatting complete.")
 
         set_dataframe(df)
+
+        log_action(
+            "FORMAT",
+            details=f"Applied formatting option '{fmt_choice}' on column '{column}'.",
+            conditions=f"fmt_choice={fmt_choice}",
+            columns=[column],
+            # rows_affected is optional here; formatting generally affects whole column
+        )
 
     except Exception as e:
         print(f"Formatting error: {e}")

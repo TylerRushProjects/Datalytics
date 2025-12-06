@@ -1,5 +1,7 @@
 import pandas as pd
 from pathlib import Path
+from core.state import set_dataframe, reset_state
+from core.audit import log_action, clear_audit_log
 
 def validate_headers_raw(path: str) -> None:
     """
@@ -50,6 +52,20 @@ def load_file(path: str) -> pd.DataFrame:
         df = pd.read_excel(path, engine="openpyxl")
     else:
         raise ValueError(f"Unsupported file type: '{ext}'. Only .csv and .xlsx are allowed.")
+
+    # BEFORE we start using this new DataFrame, reset state and audit
+    reset_state()
+    clear_audit_log()
+
+    # now set the new active DataFrame
+    set_dataframe(df, path)
+
+    # log this new import as the first action in this "session" of the dataset
+    log_action(
+        "IMPORT",
+        details=f"Imported file '{path}'",
+        rows_affected=len(df)
+    )
 
     return df
 
