@@ -51,3 +51,19 @@ def show_format_menu():
     print("8. Convert to Percentage")
     print("0. Cancel")
     return input("Enter choice: ").strip()
+
+def show_duplicate_menu():
+    """Display duplicate handling options."""
+    print("\n=== DUPLICATE OPTIONS ===")
+    print("1. Identify Duplicates Only")
+    print("2. Remove Duplicates")
+    print("0. Cancel")
+    return input("Enter choice: ").strip()
+
+def show_export_menu():
+    """Display export options."""
+    print("\n=== EXPORT MENU ===")
+    print("1. Export as CSV")
+    print("2. Export as XLSX")
+    print("0. Back")
+    return input("Enter choice: ").strip()
