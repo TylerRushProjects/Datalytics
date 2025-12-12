@@ -56,7 +56,7 @@ def show_duplicate_menu():
     """Display duplicate handling options."""
     print("\n=== DUPLICATE OPTIONS ===")
     print("1. Identify Duplicates Only")
-    print("2. Remove Duplicates")
+    print("2. Remove Duplicates (Keep First Occurrence)")
     print("0. Cancel")
     return input("Enter choice: ").strip()
 
