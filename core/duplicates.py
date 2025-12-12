@@ -47,7 +47,7 @@ def apply_duplicate_flow():
 
     # Map indices → column names
     columns = [df.columns[i - 1] for i in indices]
-    print(f"Columns selected for duplicate checking: {columns}")
+    print(f"Columns selected for duplicate checking: ", ", ".join(columns))
 
     # Step 2 – Choose operation
     dup_choice = show_duplicate_menu()
@@ -70,7 +70,7 @@ def apply_duplicate_flow():
 
 def _identify_duplicates(df: pd.DataFrame, columns: list):
     """
-    DUP-1: Identify duplicates across selected columns.
+    Identify duplicates across selected columns.
     Shows duplicate rows but does NOT modify the DataFrame.
     Now offers optional export highlighting.
     """
@@ -78,7 +78,6 @@ def _identify_duplicates(df: pd.DataFrame, columns: list):
 
     duplicates = df[df.duplicated(subset=columns, keep=False)]
 
-    print("\n=== DUPLICATES FOUND ===")
     if duplicates.empty:
         print("No duplicates found.")
         log_action(
@@ -90,9 +89,13 @@ def _identify_duplicates(df: pd.DataFrame, columns: list):
         )
         return
 
+    print("\n=== DUPLICATES FOUND ===")
+
+    # Final output
     print(duplicates.head(20).to_string(index=False))
     print(f"\nTotal duplicate rows: {len(duplicates)}")
 
+    # Log the duplicate identification action
     log_action(
         "DUP_IDENTIFY",
         details=f"Identified {len(duplicates)} duplicate rows.",
@@ -115,21 +118,43 @@ def _identify_duplicates(df: pd.DataFrame, columns: list):
         }
         set_duplicate_highlight(info)
         print("Highlighting enabled for export.")
-    else:
+    elif choice == "2":
         set_duplicate_highlight(None)
         print("Highlighting disabled.")
+    else:
+        print("Invalid choice. Returning.")
 
 
 def _remove_duplicates(df: pd.DataFrame, columns: list):
     """
-    DUP-2: Remove duplicates across selected columns.
+    Remove duplicates across selected columns.
     Keeps the first occurrence of each duplicate group.
     Updates the global DataFrame.
     """
+
+    duplicates = df[df.duplicated(subset=columns, keep="first")]
+
+    if duplicates.empty:
+        print("No duplicates found.")
+        log_action(
+            "DUP_REMOVE",
+            details="No duplicates found.",
+            conditions=f"subset={columns}",
+            columns=columns,
+            rows_affected=0,
+        )
+        return  
+    
+    print("\n=== DUPLICATES TO BE REMOVED ===")
+    print(duplicates.head(20).to_string(index=False))
+    print(f"\nTotal duplicate rows: {len(duplicates)}")
+    
+
     before = len(df)
     cleaned = df.drop_duplicates(subset=columns, keep="first")
     after = len(cleaned)
 
+    # Final output
     print("\n=== DUPLICATE REMOVAL COMPLETE ===")
     print(f"Rows before: {before}")
     print(f"Rows after:  {after}")
@@ -137,6 +162,7 @@ def _remove_duplicates(df: pd.DataFrame, columns: list):
 
     set_dataframe(cleaned)
 
+    # Log the duplicate removal action
     log_action(
         "DUP_REMOVE",
         details=f"Removed {before - after} duplicate rows.",

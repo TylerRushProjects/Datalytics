@@ -56,11 +56,12 @@ def undo_last():
     """
     global current_df, data_version
     if not history_stack:
+        print("No previous action to undo.")
         return False
-
     prev_df, prev_version = history_stack.pop()
     current_df = prev_df
     data_version = prev_version
+    print("Last action undone.")
     return True
 
 

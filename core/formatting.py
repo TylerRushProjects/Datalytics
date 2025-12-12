@@ -30,26 +30,40 @@ def apply_format_flow():
         print("Invalid column choice. Returning to menu.")
         return
 
-    col_index = int(col_choice)
-    if col_index < 1 or col_index > len(df.columns):
-        print("Invalid column selection. Returning to menu.")
+    col_index = int(col_choice) - 1
+    if col_index < 0 or col_index >= len(df.columns):
+        print("Invalid column selection. Returning.")
         return
 
-    column = df.columns[col_index - 1]
+    column = df.columns[col_index]
     print(f"Column selected: {column}")
 
     # Step 2 — Select formatting operation
+    format_map = {
+        "1": "trim_whitespace",
+        "2": "uppercase",
+        "3": "lowercase",
+        "4": "capitalize",
+        "5": "short_date",
+        "6": "long_date",
+        "7": "decimal",
+        "8": "percentage",
+    }
+
     fmt_choice = show_format_menu()
 
     if fmt_choice == "0":
         print("Formatting cancelled.")
         return
 
-    if fmt_choice not in ("1", "2", "3", "4", "5", "6", "7", "8"):
-        print("Invalid formatting option.")
+    if fmt_choice not in format_map:
+        print("Invalid formatting option. Returning.")
         return
+    
+    formatting = format_map[fmt_choice]
+    print(f"Formatting option selected: {formatting}")
 
-    # Step 3 — Apply formatting (with Undo support)
+    # Step 3 — Apply formatting
     push_state()
     _apply_format(df, column, fmt_choice)
 
@@ -109,7 +123,7 @@ def _apply_format(df: pd.DataFrame, column: str, fmt_choice: str) -> None:
             formatted = series.astype(str)
             mask = numeric.notna()
 
-            # Treat values <= 1 as proportions; others as already percentages
+            # Values over 1 are assumed to be whole percentages
             def to_percent(v: float) -> str:
                 if v <= 1:
                     v *= 100.0
@@ -118,12 +132,14 @@ def _apply_format(df: pd.DataFrame, column: str, fmt_choice: str) -> None:
             formatted[mask] = numeric[mask].map(to_percent)
             df[column] = formatted
 
+        # Final output
         print("\n=== FORMAT RESULT ===")
         print(df.head(10).to_string(index=False))
         print("\nFormatting complete.")
 
         set_dataframe(df)
 
+        # Log the formatting action
         log_action(
             "FORMAT",
             details=f"Applied formatting option '{fmt_choice}' on column '{column}'.",
@@ -132,5 +148,6 @@ def _apply_format(df: pd.DataFrame, column: str, fmt_choice: str) -> None:
             # rows_affected is optional here; formatting generally affects whole column
         )
 
+    # Catch any errors
     except Exception as e:
         print(f"Formatting error: {e}")

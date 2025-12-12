@@ -54,9 +54,8 @@ def _export_csv(df: pd.DataFrame, path: str) -> None:
             os.makedirs(directory, exist_ok=True)
         df.to_csv(path, index=False)
         print(f"CSV export complete: {path}")
-    except Exception as e:
-        print(f"Error during CSV export: {e}")
 
+            # Log the export csv action
         log_action(
             "EXPORT_CSV",
             details=f"Exported CSV to '{path}'.",
@@ -64,6 +63,8 @@ def _export_csv(df: pd.DataFrame, path: str) -> None:
         )
 
         maybe_save_audit_log(path)
+    except Exception as e:
+        print(f"Error during CSV export: {e}")
 
 
 def _export_xlsx(df: pd.DataFrame, path: str) -> None:
@@ -84,24 +85,27 @@ def _export_xlsx(df: pd.DataFrame, path: str) -> None:
         df.to_excel(path, index=False, engine="openpyxl")
         print(f"Base XLSX export complete: {path}")
 
-        # Try to apply highlighting based on prior DUP-1 config
+        # Try to apply highlighting if user has said yes to prompt in duplicate flow
         _apply_duplicate_highlighting(path, df)
 
+        # Log the export xlsx action
         log_action(
             "EXPORT_XLSX",
             details=f"Exported XLSX to '{path}'.",
             rows_affected=len(df),
         )
 
+        # Save the audit log if user says yes to prompt
         maybe_save_audit_log(path)
 
+    # Catch any errors
     except Exception as e:
         print(f"Error during XLSX export: {e}")
 
 
 def _apply_duplicate_highlighting(path: str, df: pd.DataFrame) -> None:
     """
-    If duplicate highlight info is available from DUP-1 and still matches
+    If duplicate highlight info is available from duplicate flow and still matches
     the current data_version, apply cell highlighting. Otherwise skip.
     """
     highlight_info = get_duplicate_highlight()
@@ -124,6 +128,7 @@ def _apply_duplicate_highlighting(path: str, df: pd.DataFrame) -> None:
         print("Duplicate highlight info incomplete. XLSX exported without highlighting.")
         return
 
+    # Highlight duplicates in XLSX
     try:
         from openpyxl import load_workbook
         from openpyxl.styles import PatternFill
@@ -133,6 +138,7 @@ def _apply_duplicate_highlighting(path: str, df: pd.DataFrame) -> None:
 
         fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
+        # Map column names to Excel column indices (1-based)
         col_to_excel_index = {
             col_name: idx + 1 for idx, col_name in enumerate(df.columns)
         }
@@ -155,6 +161,7 @@ def _apply_duplicate_highlighting(path: str, df: pd.DataFrame) -> None:
         wb.save(path)
         print("Duplicate highlighting applied to XLSX export.")
 
+    # Catch any errors
     except ImportError:
         print("openpyxl is required for highlighting but not installed. XLSX exported without highlighting.")
     except Exception as e:
@@ -162,6 +169,7 @@ def _apply_duplicate_highlighting(path: str, df: pd.DataFrame) -> None:
 
 
 def maybe_save_audit_log(export_path: str):
+    """ Prompt user to save audit log as text file."""
     print("\nWould you like to save the audit log as a text file in the same folder?")
     print("1. Yes")
     print("2. No")

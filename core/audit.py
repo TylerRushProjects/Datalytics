@@ -2,6 +2,8 @@ import sqlite3
 import os
 from datetime import datetime
 
+from core.state import get_dataframe
+
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "datalytics_audit.db"))
 
 
@@ -37,17 +39,19 @@ def _init_db():
 
 
 def clear_audit_log():
-    """Delete all rows from the audit_log table."""
+    """Delete all rows from the audit log table."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute("DELETE FROM audit_log;")
+        cur.execute("DELETE FROM sqlite_sequence WHERE name='audit_log';")  # reset autoincrement   
         conn.commit()
     finally:
         conn.close()
 
 
 # Initialize DB and clear any previous data when module is first imported
+# This ensures the table exists and is ready for use
 _init_db()
 
 
@@ -85,7 +89,13 @@ def get_audit_log():
 
 
 def print_audit_log():
-    """Pretty-print audit entries to the terminal."""
+    """Print audit entries to the terminal."""
+    df = get_dataframe()
+
+    if df is None:
+        print("No file loaded. Please import a file first.")
+        return
+
     rows = get_audit_log()
 
     print("\n=== AUDIT LOG ===")
@@ -104,7 +114,7 @@ def print_audit_log():
 def save_audit_log_to_txt(path: str):
     """
     Save the audit log to a text file located in the same folder as 'path'.
-    The file name is derived from the export file name.
+    The file name is from the export file name.
     """
     directory = os.path.dirname(os.path.abspath(path))
     base = os.path.splitext(os.path.basename(path))[0]
@@ -112,6 +122,7 @@ def save_audit_log_to_txt(path: str):
 
     entries = get_audit_log()
 
+    # Write to file
     try:
         with open(out_path, "w", encoding="utf-8") as f:
             f.write("=== DATALYTICS AUDIT LOG ===\n\n")

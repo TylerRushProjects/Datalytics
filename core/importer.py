@@ -37,37 +37,57 @@ def validate_path_exists(path: str) -> None:
     if not Path(path).exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-def load_file(path: str) -> pd.DataFrame:
-    validate_path_exists(path)
+def load_file():
+    """Load a CSV or XLSX file into a pandas DataFrame after validating headers."""
 
-    ext = Path(path).suffix.lower()
+    try:
+        # prompt user to select file
+        print("Import file selected.")
+        path = input("Enter file path (.csv or .xlsx): ").strip()
 
-    # IMP-4: Validate raw headers first
-    validate_headers_raw(path)
+        # Validate path exists
+        validate_path_exists(path)
 
-    # Now safely load with pandas
-    if ext == ".csv":
-        df = pd.read_csv(path)
-    elif ext == ".xlsx":
-        df = pd.read_excel(path, engine="openpyxl")
-    else:
-        raise ValueError(f"Unsupported file type: '{ext}'. Only .csv and .xlsx are allowed.")
+        # Validate raw headers first
+        validate_headers_raw(path)
 
-    # BEFORE we start using this new DataFrame, reset state and audit
-    reset_state()
-    clear_audit_log()
+        ext = Path(path).suffix.lower()
 
-    # now set the new active DataFrame
-    set_dataframe(df, path)
+        # load with pandas
+        if ext == ".csv":
+            df = pd.read_csv(path)
+        elif ext == ".xlsx":
+            df = pd.read_excel(path, engine="openpyxl")
+        else:
+            raise ValueError(f"Unsupported file type: '{ext}'. Only .csv and .xlsx are allowed.")
 
-    # log this new import as the first action in this "session" of the dataset
-    log_action(
-        "IMPORT",
-        details=f"Imported file '{path}'",
-        rows_affected=len(df)
-    )
+        # before we start using this new DataFrame, reset state and audit
+        reset_state()
+        clear_audit_log()
 
-    return df
+        # now set the new active DataFrame
+        set_dataframe(df, path)
+
+        # provide summary info to user
+        summary = get_file_summary(df)
+        print("\n=== FILE LOADED SUCCESSFULLY ===")
+        print(f"Rows: {summary['rows']}")
+        print(f"Columns: {summary['columns']}")
+        print("Headers:", summary["headers"])
+        print("\nPreview (first 5 rows):")
+        print(df.head().to_string(index=False))
+
+        # log this new import as the first action in this "session" of the dataset
+        log_action(
+            "IMPORT",
+            details=f"Imported file '{path}'",
+            rows_affected=len(df)
+        )
+
+    except Exception as e:
+                print("\nERROR: File could not be loaded.")
+                print(str(e))
+
 
 def get_file_summary(df: pd.DataFrame) -> dict:
     """

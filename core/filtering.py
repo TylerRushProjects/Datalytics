@@ -19,6 +19,8 @@ def apply_filter_flow():
     if df is None:
         print("No file loaded. Please import a file first.")
         return
+    
+    print("Filter selected.")
 
     # Step 1 — Column selection
     print("\nAvailable Columns:")
@@ -31,12 +33,12 @@ def apply_filter_flow():
         print("Invalid column choice. Returning.")
         return
 
-    col_index = int(col_choice)
-    if col_index < 1 or col_index > len(df.columns):
+    col_index = int(col_choice) - 1
+    if col_index < 0 or col_index >= len(df.columns):
         print("Invalid column selection. Returning.")
         return
 
-    column = df.columns[col_index - 1]
+    column = df.columns[col_index]
     print(f"Column selected: {column}")
 
     # Step 2 — Condition selection
@@ -74,10 +76,11 @@ def apply_filter_flow():
 
 
 def _apply_filter(df, column, condition, value):
-    """Internal filtering implementation."""
+    """Internal filtering logic."""
     series = df[column]
 
     try:
+        # Greater/Less Than
         if condition in ("greater_than", "less_than"):
             series_numeric = pd.to_numeric(series, errors="coerce")
             value_num = float(value)
@@ -87,6 +90,7 @@ def _apply_filter(df, column, condition, value):
             else:
                 filtered = df[series_numeric < value_num]
 
+        # Equals/Not Equals
         elif condition in ("equals", "not_equals"):
             if series.dtype.kind in {"i", "f"}:
                 value_num = float(value)
@@ -97,17 +101,19 @@ def _apply_filter(df, column, condition, value):
 
             filtered = df[mask] if condition == "equals" else df[~mask]
 
+        # Contains/Not Contains
         elif condition in ("contains", "not_contains"):
             s = series.astype(str).str.lower()
             v = value.lower()
             mask = s.str.contains(v, na=False)
             filtered = df[mask] if condition == "contains" else df[~mask]
 
+        # Invalid condition
         else:
             print("Invalid condition.")
             return
 
-        # Show results
+        # Show result
         print("\n=== FILTER RESULT ===")
         print(filtered.head(10).to_string(index=False))
         print(f"Rows after filtering: {len(filtered)}")
@@ -115,6 +121,7 @@ def _apply_filter(df, column, condition, value):
         # Update global DataFrame
         set_dataframe(filtered)
 
+        # Log filter action
         log_action(
             "FILTER",
             details=f"Filtered on column '{column}' with condition '{condition}' and value '{value}'.",
@@ -123,5 +130,6 @@ def _apply_filter(df, column, condition, value):
             rows_affected=len(filtered),
         )
 
+    # Catch any errors
     except ValueError:
         print("Invalid numeric input for this condition.")

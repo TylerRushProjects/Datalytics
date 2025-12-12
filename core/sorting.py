@@ -17,6 +17,8 @@ def apply_sort_flow():
     if df is None:
         print("No file loaded. Please import a file first.")
         return
+    
+    print("Sort selected.")
 
     # Step 1 — Column selection
     print("\nAvailable Columns:")
@@ -29,12 +31,12 @@ def apply_sort_flow():
         print("Invalid choice. Returning.")
         return
 
-    col_index = int(col_choice)
-    if col_index < 1 or col_index > len(df.columns):
+    col_index = int(col_choice) - 1
+    if col_index < 0 or col_index >= len(df.columns):
         print("Invalid column selection. Returning.")
         return
 
-    column = df.columns[col_index - 1]
+    column = df.columns[col_index]
     print(f"Column selected: {column}")
 
     # Step 2 — Sort direction
@@ -59,21 +61,23 @@ def apply_sort_flow():
 def _apply_sort(df, column, ascending):
     """Internal helper to sort the DataFrame."""
     try:
-        sorted_df = df.sort_values(by=column, ascending=ascending)
+        sorted = df.sort_values(by=column, ascending=ascending)
 
         print("\n=== SORT RESULT ===")
-        print(sorted_df.head(10).to_string(index=False))
-        print(f"\nRows total: {len(sorted_df)}")
+        print(sorted.head(10).to_string(index=False))
+        print(f"\nRows total: {len(sorted)}")
 
-        set_dataframe(sorted_df)
+        set_dataframe(sorted)
 
+        # Log the sort action
         log_action(
             "SORT",
             details=f"Sorted by column '{column}' in {'ascending' if ascending else 'descending'} order.",
             conditions=f"{column} {'ASC' if ascending else 'DESC'}",
             columns=[column],
-            rows_affected=len(sorted_df),
+            rows_affected=len(sorted),
         )
 
+    # Catch any errors
     except Exception as e:
         print(f"Error during sorting: {e}")
